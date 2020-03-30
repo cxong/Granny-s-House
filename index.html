@@ -1,0 +1,197 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Granny's House</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 256,
+    height: 256,
+    pixelArt: true,
+    zoom: 2,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var granny;
+var cat;
+var cursors;
+var SPEED = 50;
+var CAT_SPEED = 40;
+var WALK_FRAMERATE = 5;
+var IDLE_FRAMERATE = 2;
+var FOLLOW_DISTANCE = 32;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('bg', 'assets/bg.png');
+    this.load.spritesheet('granny', 'assets/granny.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('cat', 'assets/cat.png', { frameWidth: 32, frameHeight: 32 });
+}
+
+function create ()
+{
+    //  A simple background for our game
+    this.add.image(128, 128, 'bg');
+
+    // Cat
+    cat = this.physics.add.sprite(100, 100, 'cat');
+
+    granny = this.physics.add.sprite(150, 150, 'granny');
+
+    //  Player physics properties. Give a slight bounce.
+    granny.setBounce(0.2);
+    granny.setCollideWorldBounds(true);
+
+    // Animations
+    ["granny", "cat"].forEach(function(key) {
+        this.anims.create({
+            key: 'idle' + key,
+            frames: this.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
+            frameRate: IDLE_FRAMERATE
+        });
+        this.anims.create({
+            key: 'down' + key,
+            frames: this.anims.generateFrameNumbers(key, { start: 4, end: 7 }),
+            frameRate: WALK_FRAMERATE,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'right' + key,
+            frames: this.anims.generateFrameNumbers(key, { start: 8, end: 11 }),
+            frameRate: WALK_FRAMERATE,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'up' + key,
+            frames: this.anims.generateFrameNumbers(key, { start: 12, end: 15 }),
+            frameRate: WALK_FRAMERATE,
+            repeat: -1
+        });
+    }, this);
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+}
+
+function update ()
+{
+    var dx, dy;
+    // Granny
+    if (cursors.left.isDown)
+    {
+        dx = -1;
+    }
+    else if (cursors.right.isDown)
+    {
+        dx = 1;
+    }
+    else if (cursors.up.isDown)
+    {
+        dy = -1;
+    }
+    else if (cursors.down.isDown)
+    {
+        dy = 1;
+    }
+    else
+    {
+        dx = 0;
+        dy = 0;
+    }
+    move(granny, "granny", dx, dy, SPEED);
+    
+    // Cat
+    if (granny.x + FOLLOW_DISTANCE < cat.x)
+    {
+        dx = -1;
+    }
+    else if (granny.x - FOLLOW_DISTANCE > cat.x)
+    {
+        dx = 1;
+    }
+    else if (granny.y + FOLLOW_DISTANCE < cat.y)
+    {
+        dy = -1;
+    }
+    else if (granny.y - FOLLOW_DISTANCE > cat.y)
+    {
+        dy = 1;
+    }
+    else
+    {
+        dx = 0;
+        dy = 0;
+    }
+    move(cat, "cat", dx, dy, CAT_SPEED);
+}
+
+function move(sprite, key, dx, dy, speed)
+{
+    if (dx < 0)
+    {
+        sprite.setVelocityX(-speed);
+
+        // Use right anim but flipped
+        sprite.anims.play('right' + key, true);
+        sprite.setScale(-1, 1);
+    }
+    else if (dx > 0)
+    {
+        sprite.setVelocityX(speed);
+
+        sprite.anims.play('right' + key, true);
+        sprite.setScale(1, 1);
+    }
+    else
+    {
+        sprite.setVelocityX(0);
+    }
+    if (dy < 0)
+    {
+        sprite.setVelocityY(-speed);
+
+        sprite.anims.play('up' + key, true);
+    }
+    else if (dy > 0)
+    {
+        sprite.setVelocityY(speed);
+
+        sprite.anims.play('down' + key, true);
+    }
+    else
+    {
+        sprite.setVelocityY(0);
+    }
+    if (dx == 0 && dy == 0)
+    {
+        sprite.anims.play('idle' + key, true);
+    }
+}
+
+</script>
+
+</body>
+</html>
